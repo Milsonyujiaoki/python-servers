@@ -1,0 +1,585 @@
+Fase 1 — Dominar SSH de verdade
+1. Autenticação por chave pública
+
+Hoje provavelmente você usou senha.
+
+Agora vá para:
+
+ssh-keygen
+authorized_keys
+id_rsa
+ed25519
+
+Aprenda:
+
+chave pública vs privada
+assinatura criptográfica
+autenticação sem senha
+segurança real
+
+Isso é ESSENCIAL.
+
+2. SSH Config
+
+Arquivo:
+
+~/.ssh/config
+
+Exemplo:
+
+Host server
+    HostName 192.168.0.10
+    User yuji
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Depois:
+
+ssh server
+
+Você começa a transformar SSH em “infraestrutura”.
+
+3. Tipos de forwarding
+
+Você aprendeu um tipo.
+
+Mas existem 3 principais:
+
+Local Forwarding (-L)
+ssh -L 8080:localhost:3000 user@host
+
+Fluxo:
+
+Seu navegador
+    ↓
+localhost:8080
+    ↓ túnel SSH
+Servidor remoto:3000
+
+Uso:
+
+acessar painéis internos
+banco de dados remoto
+dashboards
+APIs privadas
+Remote Forwarding (-R)
+ssh -R 2222:localhost:22 user@host
+
+Fluxo:
+
+Servidor remoto
+    ↓
+porta 2222
+    ↓ túnel
+seu computador local
+
+Muito usado para:
+
+reverse shell
+acesso reverso
+NAT traversal
+IoT
+Dynamic Forwarding (-D)
+ssh -D 8080 user@host
+
+Cria um proxy SOCKS5.
+
+Fluxo:
+
+Aplicação
+    ↓
+SOCKS Proxy
+    ↓ túnel SSH
+internet pelo servidor remoto
+
+Isso é praticamente uma mini-VPN.
+
+Fase 2 — Ferramentas importantes
+tmux
+
+Você já mencionou.
+
+Combinação clássica:
+
+SSH + tmux
+
+Você conecta:
+
+ssh server
+tmux attach
+
+E mantém sessões persistentes mesmo desconectando.
+
+Isso é workflow profissional Linux.
+
+scp / rsync
+
+Transferência de arquivos:
+
+scp file.txt user@host:/tmp
+
+Depois evolua para:
+
+rsync
+
+Muito importante.
+
+sshfs
+
+Montar filesystem remoto:
+
+sshfs user@host:/dir ./mnt
+
+Máquina remota vira pasta local.
+
+Fase 3 — Segurança
+
+Aprenda:
+
+fail2ban
+desativar login root
+PermitRootLogin
+PasswordAuthentication no
+firewall UFW
+chaves ED25519
+known_hosts
+fingerprint
+
+Aqui você entra em segurança real.
+
+Quando ir para HTTP
+
+Depois que você dominar:
+
+sockets TCP
+forwarding
+SSH
+portas
+serviços
+
+Aí HTTP vira MUITO mais intuitivo.
+
+Porque você vai perceber:
+
+HTTP é “só” um protocolo rodando sobre TCP
+O caminho ideal para HTTP
+
+Depois do SSH:
+
+Socket TCP
+    ↓
+HTTP puro
+    ↓
+Servidor HTTP simples
+    ↓
+HTTPS/TLS
+    ↓
+Headers
+    ↓
+REST API
+    ↓
+Reverse Proxy
+    ↓
+Nginx
+    ↓
+Load balancing
+Projeto PERFEITO para você agora
+
+Monte isso:
+
+Notebook Positivo
+├── SSH Server
+├── tmux
+├── Python HTTP Server
+├── Nginx
+├── Port forwarding
+└── Dashboard acessível pela rede
+
+Depois:
+
+Celular
+    ↓
+SSH tunnel
+    ↓
+Notebook
+    ↓
+HTTP service
+
+Você vai literalmente enxergar:
+
+TCP
+HTTP
+túneis
+proxy
+portas
+forwarding
+serviços
+autenticação
+
+Tudo funcionando junto.
+
+O que isso desbloqueia depois
+
+Isso evolui naturalmente para:
+
+SSH
+├── DevOps
+├── Docker
+├── Kubernetes
+├── CI/CD
+├── Cloud
+├── Reverse Proxy
+├── VPN
+├── Homelab
+├── Self-hosting
+├── Remote development
+├── Distributed systems
+└── Cybersecurity
+Minha recomendação prática
+Próximos 3 passos
+1. SSH com chave pública
+2. tmux + sessões persistentes
+3. Todos os tipos de forwarding (-L, -R, -D)
+
+Depois:
+
+HTTP + Nginx + Reverse Proxy
+
+Essa sequência cria uma base MUITO sólida.
+
+Mapa mental consolidado
+REDE
+├── TCP/IP
+│   ├── Socket
+│   ├── Porta
+│   ├── Interface
+│   ├── NAT
+│   └── Firewall
+│
+├── SSH
+│   ├── Shell remoto
+│   ├── Criptografia
+│   ├── Túnel
+│   ├── Port forwarding
+│   ├── SOCKS proxy
+│   └── Transferência
+│
+├── HTTP
+│   ├── Request/Response
+│   ├── Headers
+│   ├── REST
+│   ├── HTTPS
+│   └── APIs
+│
+└── Infraestrutura
+    ├── Nginx
+    ├── Reverse Proxy
+    ├── Docker
+    ├── Cloud
+    ├── VPN
+    └── Kubernetes
+
+
+
+
+
+Modelo real simplificado  ---------------------------
+
+Imagine:
+
+Chrome
+↓
+Socket TCP
+↓
+Porta 443
+↓
+Interface de rede
+↓
+Wi-Fi/Ethernet
+↓
+Roteador
+↓
+Internet
+↓
+Servidor remoto
+↓
+Nginx
+↓
+Aplicação
+
+
+Fluxo TCP
+
+Quando você faz:
+
+ssh 192.168.0.10
+
+O que acontece:
+
+Cliente SSH
+↓
+Cria socket TCP
+↓
+Conecta ao IP:22
+↓
+Servidor aceita
+↓
+Handshake TCP
+↓
+Handshake SSH
+↓
+Canal criptografado
+↓
+Shell remoto
+
+
+
+O que é uma porta?
+
+Porta NÃO é algo físico.
+
+É apenas:
+
+um número associado a um socket
+
+Exemplo:
+
+22   SSH
+80   HTTP
+443  HTTPS
+5432 PostgreSQL
+3306 MySQL
+O que é LISTEN?
+
+Quando o servidor “abre uma porta”:
+
+socket()
+bind()
+listen()
+
+Ele entra em:
+
+LISTEN
+
+Esperando conexões.
+
+Vamos visualizar isso
+
+Você já usou:
+
+ss -tulpn
+
+ou:
+
+netstat -tulpn
+
+Isso mostra:
+
+processo → socket → porta
+Fluxo completo do SSH
+
+Agora a visão correta:
+
+┌────────────┐
+│ ssh client │
+└─────┬──────┘
+      │
+      ▼
+┌────────────┐
+│ TCP Socket │
+└─────┬──────┘
+      │
+      ▼
+┌────────────┐
+│ Porta 22   │
+└─────┬──────┘
+      │
+      ▼
+┌────────────┐
+│ Rede/NAT   │
+└─────┬──────┘
+      │
+      ▼
+┌────────────┐
+│ sshd       │
+└────────────┘
+
+
+FASE 2 — CRIPTOGRAFIA DO SSH
+
+Aqui começa a magia real.
+
+Chave pública vs privada
+
+Você gera:
+
+Privada → fica com você
+Pública → vai pro servidor
+Analogia
+Pública  = cadeado
+Privada  = chave do cadeado
+
+Servidor:
+
+possui seu cadeado
+
+Cliente:
+
+prova possuir a chave.
+Gerando chave
+
+Hoje use:
+
+ssh-keygen -t ed25519
+
+ED25519 é moderno e excelente.
+
+Arquivos criados
+~/.ssh/id_ed25519
+~/.ssh/id_ed25519.pub
+MUITO IMPORTANTE
+.pub  → pública
+sem .pub → PRIVADA
+
+NUNCA compartilhe a privada.
+
+Instalando no servidor
+ssh-copy-id user@host
+
+ou manualmente:
+
+cat id_ed25519.pub >> ~/.ssh/authorized_keys
+
+
+Precisamos configurar do lado do servidor na pasta .ssh o arquivo config,deixei assim na minha maquina
+
+Host positivo
+    HostName 192.168.0.44
+    User dev_yuji
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host samsung
+    HostName 192.168.0.13
+    User dev-yuji
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Como tambem -e necessário configurar o arquivo authorized keys
+
+
+Dessa maneira temos autenticação assimétrica, feita sem passar senha  -------------------------------------------
+
+Camada de identidade
+├── public/private keys
+├── authorized_keys
+├── known_hosts
+└── fingerprints
+
+Camada de transporte
+├── TCP
+├── forwarding
+├── NAT
+└── encapsulamento
+
+Camada de acesso
+├── ssh config
+├── aliases
+├── usuários
+└── autenticação
+
+
+challenge-response authentication
+
+
+1. Local Forwarding (-L)
+2. Remote Forwarding (-R)
+3. Dynamic Forwarding (-D)
+4. SOCKS Proxy
+5. SSH Multiplexing
+6. ProxyJump
+7. Agent Forwarding
+
+
+
+
+
+
+
+
+COMUNICAÇÃO MAQUINA E UM SERVIDOR -------------
+
+A forma mais fácil de entender a diferença entre eles é olhar para onde o tráfego entra e para onde ele vai.
+
+1. Local Forwarding (-L)
+O Local Forwarding pega uma porta da sua máquina local (onde você está digitando o comando) e a redireciona para um destino a partir da perspectiva do servidor SSH.
+
+Como funciona: Você abre uma porta "X" no seu próprio PC. Qualquer programa seu que enviar dados para essa porta "X" terá o tráfego encapsulado pelo SSH, enviado até o servidor remoto, e o servidor remoto entregará esse tráfego ao destino final.
+
+Caso de uso clássico: Você quer acessar um banco de dados (ex: MySQL na porta 3306) que está rodando dentro de um servidor na nuvem, mas o firewall do servidor bloqueia o acesso externo.
+
+O Comando:
+
+Bash
+ssh -L 8080:localhost:3306 usuario@servidor-ssh
+(Traduzindo: "Pegue a porta 8080 do meu PC local, mande pelo túnel e, quando chegar lá no servidor-ssh, entregue para o localhost:3306 dele mesmo"). Agora, se você conectar seu client de banco de dados em localhost:8080, estará acessando o banco do servidor seguro.
+
+2. Remote Forwarding (-R)
+O Remote Forwarding (também chamado de Reverse Tunneling) faz exatamente o oposto. Ele pega uma porta do servidor remoto e a redireciona de volta para a sua máquina local (ou para outro lugar que sua máquina acesse).
+
+Como funciona: Você abre uma porta "Y" lá no servidor SSH na nuvem. Qualquer pessoa ou serviço na internet que acessar essa porta "Y" do servidor terá o tráfego enviado de volta pelo túnel SSH direto para uma porta na sua máquina local.
+
+Caso de uso clássico: Você está desenvolvendo um site no seu PC (localhost:3000) e quer mostrar para um cliente. Como você está atrás do roteador da sua casa (NAT) e não tem IP público, o cliente não consegue te acessar. Você usa o -R para expor sua porta local através de um servidor público na nuvem.
+
+O Comando:
+
+Bash
+ssh -R 9090:localhost:3000 usuario@servidor-publico
+(Traduzindo: "Abra a porta 9090 no servidor-publico. Tudo o que chegar nela, mande de volta pelo túnel e entregue no localhost:3000 da minha máquina local"). Se o cliente acessar http://servidor-publico:9090, ele verá o site rodando no seu PC.
+
+3. Dynamic Forwarding (-D)
+O Dynamic Forwarding transforma o seu servidor SSH em um SOCKS Proxy. Ao contrário dos anteriores, você não define um destino fixo (como uma porta ou IP específicos).
+
+Como funciona: Você abre uma porta local no seu PC. Qualquer aplicativo configurado para usar essa porta como proxy (como o seu navegador de internet) terá todo o seu tráfego web enviado para o servidor SSH, e o servidor SSH fará as requisições para a internet no seu lugar.
+
+Caso de uso clássico: Você está conectado no Wi-Fi público de uma cafeteria e não confia na rede, ou precisa acessar um site que está bloqueado na rede local onde você se encontra, mas que o seu servidor remoto consegue acessar.
+
+O Comando:
+
+Bash
+ssh -D 1080 usuario@servidor-ssh
+(Traduzindo: "Abra a porta 1080 no meu PC como um proxy dinâmico"). Depois de rodar isso, basta ir nas configurações do seu navegador (Firefox, Chrome), ativar o proxy SOCKS v5 apontando para localhost:1080. Pronto, você estará navegando na web usando o IP do servidor remoto.
+
+
+
+sudo systemctl enable ssh.service
+sudo systemctl restart ssh.service
+
+
+sudo systemctl disable ssh.socket
+sudo systemctl stop ssh.socket
+
+fudo ufw enable
+
+systemctl status ssh.socket
+systemctl status ssh.service
+
+sudo systemctl disable --now ssh.socket
+sudo systemctl enable --now ssh.service
+
+sudo systemctl disable --now ssh.service
+sudo systemctl enable --now ssh.socket
+
+
+
+sudo systemctl mask ssh.socket
+sudo systemctl unmask ssh.service
+sudo systemctl enable --now ssh.service
+
+
+sudo systemctl stop ssh.service
+sudo systemctl unmask ssh.socket
+sudo systemctl enable --now ssh.socket
+

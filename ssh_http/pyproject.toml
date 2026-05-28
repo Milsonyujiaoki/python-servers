@@ -1,0 +1,14 @@
+[project]
+name = "ssh"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "asyncssh>=2.23.0",
+    "cryptography>=48.0.0",
+    "fabric>=3.2.3",
+    "fastapi>=0.136.3",
+    "httpx>=0.28.1",
+    "pydantic>=2.13.4",
+]

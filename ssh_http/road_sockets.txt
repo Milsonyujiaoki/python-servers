@@ -1,0 +1,35 @@
+
+Criar socket Unit ----------------------
+
+sudo micro /etc/systemd/system/myhttp.socket
+
+[Unit]
+Description=My Python HTTP Socket
+
+[Socket]
+ListenStream=8000
+Accept=no
+
+[Install]
+WantedBy=sockets.target
+
+Service Unit ----------------------
+
+sudo micro /etc/systemd/system/myhttp.service
+
+[Unit]
+Description=My Python HTTP Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/yuji/server.py
+StandardInput=socket
+
+
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable --now myhttp.socket
+
+
+systemctl status myhttp.service

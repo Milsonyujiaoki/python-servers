@@ -1,0 +1,311 @@
+FASE 1 — Fundamentos
+├── SSH Server
+├── HTTP Server
+├── Testes locais
+└── Logs
+
+FASE 2 — Administração
+├── Usuários
+├── Permissões
+├── Chaves SSH
+├── Firewall
+└── Process management
+
+FASE 3 — Networking
+├── Port forwarding
+├── Reverse proxy
+├── DNS
+├── HTTPS
+└── Túneis SSH
+
+FASE 4 — Infraestrutura
+├── Nginx
+├── Docker
+├── Deploys
+├── CI/CD
+└── Observabilidade
+
+FASE 5 — Advanced Systems
+├── Multiplexação
+├── Sockets
+├── TCP internals
+├── Load balancing
+├── Async IO
+└── Runtime engineering
+
+
+sudo apt install openssh-server -y
+ssh -V
+sudo apt install net-tools lsof -y
+sudo apt install curl -y
+sudo apt install tcpdump -y
+sudo apt install netcat-openbsd -y
+sudo apt install apache2-utils -y
+
+
+
+
+systemctl status ssh
+sudo service ssh start
+ou
+sudo /etc/init.d/ssh start
+
+
+Descobrir IP :  ip a    ou    hostname -I
+
+ssh usuario@localhost  ou ssh usuario@IP_DO_WSL
+
+
+Ver Portas:    sudo netstat -tulpn     ou   sudo ss -tulpn
+
+Ver Processos:   ps aux | grep ssh
+
+Ver Logs: sudo journalctl -u ssh       ou        sudo tail -f /var/log/auth.log
+
+
+Python Server  -------------------------
+
+
+mkdir ~/web
+cd ~/web
+
+echo "<h1>Hello Server</h1>" > index.html
+python3 -m http.server 8080
+http://localhost:8080
+
+
+
+
+HTTP  ------------------
+
+curl http://localhost:8080
+
+headers:  curl -I http://localhost:8080
+
+verbose:  curl -v http://localhost:8080
+
+nc localhost 8080
+GET / HTTP/1.1
+Host: localhost
+
+
+Requisições --------------
+
+
+sudo tcpdump -i any port 8080
+curl localhost:8080
+
+
+
+Apache ------------------
+
+ab -n 1000 -c 50 http://localhost:8080/
+
+
+
+Usuários e grupos ------------------------
+whoami
+groups
+
+PASSO 1 — Criar Port Forwarding
+
+Abra:
+
+PowerShell COMO ADMINISTRADOR
+
+Muito importante.
+
+PASSO 2 — Resetar Regras Antigas
+
+Execute:
+
+netsh interface portproxy reset
+PASSO 3 — Criar Proxy TCP
+
+Execute:
+
+netsh interface portproxy add v4tov4 `
+listenaddress=0.0.0.0 `
+listenport=22 `
+connectaddress=172.22.195.75 `
+connectport=22
+
+O Que Isso Faz
+Windows escuta:
+0.0.0.0:22
+
+e encaminha para:
+
+172.22.195.75:22
+0.0.0.0 Novamente
+
+Isso significa:
+
+escutar em TODAS as interfaces
+
+inclusive:
+
+192.168.0.13
+PASSO 4 — Abrir Firewall
+
+Ainda no PowerShell ADMIN:
+
+New-NetFirewallRule `
+-DisplayName "WSL2 SSH" `
+-Direction Inbound `
+-Protocol TCP `
+-LocalPort 22 `
+-Action Allow
+
+
+PASSO 5 — Verificar Regras
+
+Execute:
+
+netsh interface portproxy show all
+
+Você deve ver algo tipo:
+
+0.0.0.0    22    172.22.195.75    22
+PASSO 6 — TESTE REAL
+
+Agora, no Positivo:
+
+ping 192.168.0.13
+
+Isso DEVE responder.
+
+PASSO 7 — SSH REAL ENTRE AS MÁQUINAS
+
+Agora:
+
+ssh dev-yuji@192.168.0.13
+
+
+ver os pacotes:   sudo tcpdump -i any port 22
+ver a porta:    netstat -ano | findstr :22
+
+Get-NetConnectionProfile
+Set-NetConnectionProfile -InterfaceAlias "Wi-Fi" -NetworkCategory Private
+
+
+Verificando  -----------------------
+
+1. ssh dev-yuji@192.168.0.13
+2. sudo tcpdump -i any port 22
+3. netstat -ano | findstr :22
+4. Get-NetConnectionProfile
+ sudo tail -f /var/log/auth.log
+systemctl status ssh
+
+ 
+
+O Que Você Pode Fazer COM SSH
+
+Agora começa a parte divertida.
+
+1. Terminal Remoto
+ssh user@host
+2. Executar Comandos Remotos
+ssh user@host "htop"
+
+ou:
+
+ssh user@host "ls -la"
+3. Transferir Arquivos — SCP
+scp arquivo.txt user@host:/tmp
+4. Sincronização — rsync
+rsync -avz pasta/ user@host:/backup
+5. Túneis SSH
+
+ABSURDAMENTE importante.
+
+Port Forwarding
+ssh -L 8080:localhost:80 user@host
+SOCKS Proxy
+ssh -D 1080 user@host
+
+Isso cria VPN-like tunneling.
+
+6. Remote Development
+
+Você pode:
+
+usar VSCode remoto
+editar arquivos
+programar remotamente
+rodar containers
+compilar código
+
+Tudo via SSH.
+
+7. Automação
+for host in servers; do
+    ssh $host uptime
+done
+8. Clusters
+
+Você pode controlar várias máquinas:
+
+Notebook
+├── Raspberry Pi
+├── VM
+├── servidor
+├── cloud VPS
+└── containers
+
+
+
+
+Encerrando o serviço ------------------
+
+
+sudo ss -tulpn | grep :22
+
+sudo service ssh stop   ou sudo systemctl stop ssh
+
+
+
+Resuminho  ------------------------------------
+
+Rede Wi-Fi (192.168.0.x)
+        │
+        ▼
+Windows Host
+192.168.0.44
+        │
+        ├── PortProxy
+        │
+        ▼
+vEthernet (WSL)
+172.28.x.x
+        │
+        ▼
+WSL2 Ubuntu
+172.28.x.x
+        │
+        ▼
+sshd escutando na porta 22
+
+
+Em termos de networking eu criei um TCP Forwarding / Port Forwarding
+Criamos um servidor SSH dentro do WSL Linux.
+Como o WSL2 roda em uma rede virtual NAT isolada pelo Hyper-V,
+outros dispositivos da LAN não conseguem acessar diretamente o IP do WSL.
+
+Então usamos o Windows Host como intermediário,
+redirecionando a porta 22 do Windows para a porta 22 do WSL usando PortProxy.
+
+├── Hypervisor
+├── Virtualização
+├── NAT
+├── Virtual Switch
+├── Port Forwarding
+├── TCP Proxy
+├── Rede virtual
+├── Host vs Guest
+├── Interface virtual
+├── Encaminhamento de tráfego
+└── Serviços de rede
+
+-------------------------------------------------

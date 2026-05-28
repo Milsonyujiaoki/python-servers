@@ -1,0 +1,7 @@
+1. SSH avançado
+2. HTTP/HTTPS
+3. Reverse Proxy
+4. DNS
+5. Containers
+6. VPS/Cloud
+7. Automação e DevOps
