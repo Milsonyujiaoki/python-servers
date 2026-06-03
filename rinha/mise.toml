@@ -1,0 +1,23 @@
+[tools]
+python = "3.13.13"
+uv = "latest"
+
+[tasks.format]
+description = "Formata o código e organiza imports usando o Ruff"
+run = "uv run ruff format . && uv run ruff check . --fix"
+
+[tasks.test]
+description = "Roda os testes com cobertura de código"
+run = "uv run pytest --cov=app --cov-report=term-missing"
+
+[tasks.up]
+description = "Sobe o ambiente completo no Docker"
+run = "docker compose up --build"
+
+[tasks.down]
+description = "Derruba o ambiente do Docker e limpa os volumes (Zera o Banco)"
+run = "docker compose down -v"
+
+[tasks.stop]
+description = "Apenas pausa os containers sem apagar os dados"
+run = "docker compose stop"
