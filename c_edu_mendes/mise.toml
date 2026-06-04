@@ -1,0 +1,41 @@
+[tools]
+python = "3.13.13"
+uv = "0.11.18"
+
+
+[tasks.format]
+description = "Formata o código e organiza imports usando o Ruff"
+run = "uv run ruff format . && uv run ruff check . --fix"
+
+[tasks.test]
+description = "Roda os testes com cobertura de código"
+run = "uv run pytest -vv"
+
+[tasks.test-cov]
+description = "Roda os testes com cobertura de código"
+run = "uv run pytest --cov=app --cov-report=term-missing -vv ;uv run coverage html"
+
+[tasks.up]
+description = "Sobe o ambiente completo no Docker"
+run = "docker compose up --build"
+
+[tasks.down]
+description = "Derruba o ambiente do Docker e limpa os volumes (Zera o Banco)"
+run = "docker compose down -v"
+
+[tasks.stop]
+description = "Apenas pausa os containers sem apagar os dados"
+run = "docker compose stop"
+
+[tasks.dev-fast]
+description = "Inicia o servidor FastAPI em modo de desenvolvimento com hot-reload"
+run = "uv run fastapi dev app.py --host 127.0.0.1 --port 8100"
+
+[tasks.dev-uv]
+description = "Inicia o servidor uvicorn em modo de desenvolvimento com hot-reload"
+run ="uv run uvicorn app:app --host 127.0.0.1 --port 8050 --reload"
+
+
+[tasks.prod]
+description = "inicia servidor prod"
+run = "uv run gunicorn app:app -w 4 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:8666"

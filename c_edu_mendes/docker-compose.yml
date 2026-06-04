@@ -17,27 +17,27 @@ services:
     build: .
     network_mode: host
     environment:
-      - DATABASE_URL=postgres://admin:admin@localhost:5432/rinha
+      - DATABASE_URL=postgres://admin:admin@localhost:5555/c_edu
       - PORT=8001
     command: uvicorn app:app --host 127.0.0.1 --port 8001 --workers 2
     deploy:
       resources:
         limits:
           cpus: '0.40'
-          memory: '700MB'
+          memory: '350MB'
 
   api2:
     build: .
     network_mode: host
     environment:
-      - DATABASE_URL=postgres://admin:admin@localhost:5432/rinha
+      - DATABASE_URL=postgres://admin:admin@localhost:5555/c_edu
       - PORT=8002
     command: uvicorn app:app --host 127.0.0.1 --port 8002 --workers 2
     deploy:
       resources:
         limits:
           cpus: '0.40'
-          memory: '700MB'
+          memory: '350MB'
 
   db:
     image: postgres:16-alpine
@@ -45,7 +45,7 @@ services:
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
-      - POSTGRES_DB=rinha
+      - POSTGRES_DB=c_edu
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     command: postgres -c max_connections=100 -c shared_buffers=512MB -c synchronous_commit=off -c fsync=off -c full_page_writes=off
@@ -53,4 +53,4 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: '1400MB'
+          memory: '1024MB'

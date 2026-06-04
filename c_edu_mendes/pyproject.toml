@@ -1,0 +1,53 @@
+[project]
+name = "c-edu-mendes"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "asyncpg>=0.31.0",
+    "fastapi[standard]>=0.136.3",
+    "orjson>=3.11.9",
+    "pydantic>=2.13.4",
+    "uvicorn>=0.48.0",
+    "alembic>=1.13.0",
+    "pyjwt[crypto]>=2.10.0",
+    "gunicorn>=26.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.1.0",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.15.15",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+# E (Error), F (Pyflakes), I (Isort), W (Warning)
+# B (Bugbear - pega bugs de lógica), S (Security - analisa falhas de segurança)
+select = ["E", "F", "I", "W", "B", "S", "PL", "PT"]
+
+[tool.ruff.format]
+preview=true
+quote-style="double"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = "."
+addopts = "-p no:warning"
+
