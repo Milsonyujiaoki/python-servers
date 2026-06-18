@@ -1,7 +1,7 @@
 [project]
 name = "c-edu-mendes"
 version = "0.1.0"
-description = "Add your description here"
+description = ""
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -14,12 +14,22 @@ dependencies = [
     "pyjwt[crypto]>=2.10.0",
     "gunicorn>=26.0.0",
     "msgpack>=1.1.2",
+    "sqlalchemy>=2.0.50",
+    "pypika>=0.51.1",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "mypy>=2.1.0",
+    "opentelemetry-api>=1.42.1",
+    "opentelemetry-distro>=0.63b1",
+    "opentelemetry-exporter-otlp>=1.42.1",
+    "opentelemetry-instrumentation-fastapi>=0.63b1",
+    "opentelemetry-instrumentation-httpx>=0.63b1",
+    "opentelemetry-instrumentation-requests>=0.63b1",
+    "opentelemetry-instrumentation-sqlalchemy>=0.63b1",
+    "opentelemetry-sdk>=1.42.1",
+    "py-spy>=0.4.2",
     "pytest>=9.0.3",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
@@ -29,6 +39,10 @@ dev = [
 
 [tool.ruff]
 line-length = 79
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"] # Ignora o aviso de assert dentro da pasta tests
+
 
 [tool.ruff.lint]
 # E (Error), F (Pyflakes), I (Isort), W (Warning)
@@ -51,4 +65,6 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = "."
 addopts = "-p no:warning"
-
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning"
+]

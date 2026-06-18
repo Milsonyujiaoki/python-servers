@@ -1,0 +1,29 @@
+events{}
+
+http {
+	upstream backend {
+	#least_conn:
+		server 0.0.0.0:8101 max_fails=1 fail_timeout=5s; 
+		server 0.0.0.0:8103 max_fails=1 fail_timeout=5s; 
+		server 0.0.0.0:8104 max_fails=1 fail_timeout=5s; 
+	}
+
+	server {
+		listen 8200;
+
+		location / {
+			proxy_pass http://backend;
+
+			proxy_next_upstream error timeout invalid_header http_502 http_503 http_504;
+
+			proxy_next_upstream timeout 5s;
+
+			proxy_next_upstream tries 3;
+
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header X-Forwarded-Proto $scheme;
+		}
+	}
+}

@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+import msgpack
+
 
 def test_create_user_success(client):
 
@@ -140,9 +142,6 @@ def test_csv_response(client):
     assert response.status_code == 200
 
     assert "text/csv" in response.headers["content-type"]
-
-
-import msgpack
 
 
 def test_msgpack_response(client):

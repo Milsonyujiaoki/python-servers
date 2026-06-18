@@ -1,4 +1,8 @@
+[env]
+_.python.venv = ".venv"
+
 [tools]
+go = "1.26.4"
 python = "3.13.13"
 uv = "0.11.18"
 
@@ -13,7 +17,7 @@ run = "uv run pytest -vv"
 
 [tasks.test-cov]
 description = "Roda os testes com cobertura de código"
-run = "uv run pytest --cov=app --cov-report=term-missing -vv ;uv run coverage html"
+run = "uv run pytest --cov=app --cov-report=term-missing -vv"
 
 [tasks.up]
 description = "Sobe o ambiente completo no Docker"
