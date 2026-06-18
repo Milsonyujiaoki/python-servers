@@ -2,13 +2,13 @@ from datetime import datetime
 from sqlalchemy import select
 from dataclasses import asdict
 from app.models import User
-from tests.conftest import _mock_db_time_id, mock_db_time_id
+from tests.conftest import mock_db_time_id
 from app.schemas import UserPublic, UserDB
 
 
 def test_create_user(session, mock_db_time_id) -> None:
     data_esperada = datetime.strptime("28/08/2000", "%d/%m/%Y").date()
-    with _mock_db_time_id(model=User) as (time, static_uuid):
+    with mock_db_time_id(model=User) as (time, static_uuid):
         new_user = User(
             username="test",
             cpf_cnpj="test",
