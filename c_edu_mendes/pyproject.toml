@@ -40,6 +40,7 @@ dev = [
 
 [tool.ruff]
 line-length = 79
+extend-exclude = ['migrations']
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"] # Ignora o aviso de assert dentro da pasta tests

@@ -16,7 +16,7 @@ def test_create_user(session, mock_db_time_id) -> None:
             password="senhateste",
             birth_date=data_esperada,
         )
-        # breakpoint()
+        # breakpoint() 
         session.add(new_user)
         session.commit()
 
