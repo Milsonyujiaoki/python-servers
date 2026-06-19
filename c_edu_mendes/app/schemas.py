@@ -9,6 +9,7 @@ from pydantic import (
     EmailStr,
     Field,
     field_validator,
+    ConfigDict,
 )
 
 # =====================================================
@@ -50,7 +51,7 @@ class ItemCardSchema(BaseModel):
 def generate_default_password() -> str:
     return str(
         random.choice(string.ascii_uppercase)  # noqa: S311
-        + str(random.randint(10000000, 99999999))  # noqa: S311
+        + str(random.randint(100000000000, 999999999999))  # noqa: S311
     )
 
 
@@ -70,7 +71,7 @@ class UserSchema(BaseModel):
     email: EmailStr = Field(default="emailteste@gmail.com")
 
     password: str = Field(
-        min_length=8,
+        min_length=12,
         default_factory=generate_default_password,
     )
 
@@ -144,27 +145,12 @@ class UserSchema(BaseModel):
 
 class UserPublic(BaseModel):
     id: UUID
-    name: str
+    name: str = Field(validation_alias="username")
     email: EmailStr
+    model_config = ConfigDict( from_attributes=True, populate_by_name=True )
 
-
-# =====================================================
-# DATABASE MODEL
-# =====================================================
-
-
-class UserDB(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-
-    name: str
-
-    birth_date: date
-
-    cpf_cnpj: str
-
-    email: EmailStr
-
-    password_hash: str
+class UserList(BaseModel):
+    users: list[UserPublic]
 
 
 # =====================================================

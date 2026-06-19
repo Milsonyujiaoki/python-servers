@@ -1,7 +1,4 @@
-import asyncio
-import csv
-import io
-import time
+import asyncio, csv, io, datetime, time, string
 from uuid import UUID
 
 import msgpack
@@ -29,6 +26,7 @@ from app.schemas import (
     ItemCardSchema,
     UserPublic,
     UserSchema,
+    UserList,
 )
 
 app = FastAPI(title="curso fastapi - app.py")
@@ -45,9 +43,11 @@ def root():
 
 
 @app.post(
-    "/users", response_model=UserPublic, status_code=status.HTTP_201_CREATED
+    "/users",
+    response_model=UserPublic,
+    status_code=status.HTTP_201_CREATED
 )
-def create_user(user: UserSchema, session: Session = Depends(get_session)):
+def create_user(user: UserSchema, session: Session = Depends(get_session)) -> UserPublic:
     db_user: User | None = session.scalar(
         select(User).where(
             (User.email == user.email)
@@ -90,7 +90,6 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
         email=db_user.email,
     )
 
-
 """ @app.post(
     "/users",
     response_model=UserPublic,
@@ -117,14 +116,10 @@ def create_user(
     )
  """
 
-
-@app.get("/users", response_model=list[UserPublic])
-def list_users(session: Session = Depends(get_session)) -> list[UserPublic]:
-    users = session.scalars(select(User)).all()
-    return [
-        UserPublic(id=user.id, name=user.username, email=user.email)
-        for user in users
-    ]
+@app.get("/users", response_model=UserList, status_code=status.HTTP_200_OK)
+def get_all_users(session: Session = Depends(get_session), limit: int = 50, offset: int = 0) -> UserList:
+    users = session.scalars(select(User).offset(offset).limit(limit)).all()
+    return UserList(users=[UserPublic(id=user.id, name=user.username, email=user.email) for user in users])
 
 
 @app.get(
@@ -146,24 +141,56 @@ def get_user(
         email=user.email,
     )
 
+@app.put(
+    "/users/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=UserPublic,
+)
+def update_user(
+    user_id: UUID,
+    user_update: UserSchema,
+    session: Session = Depends(get_session),
+) -> UserPublic:
+    db_user = session.get(User, user_id)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado.",
+        )
+
+    db_user.username = user_update.name
+    db_user.cpf_cnpj = user_update.cpf_cnpj
+    db_user.email = user_update.email
+    db_user.password = user_update.password
+    db_user.birth_date = user_update.birth_date
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return UserPublic(
+        id=db_user.id,
+        name=db_user.username,
+        email=db_user.email,
+    )
 
 @app.delete(
     "/users/{user_id}",
-    status_code=204,
+    status_code=status.HTTP_200_OK,
 )
 def delete_user(
     user_id: UUID, session: Session = Depends(get_session)
 ) -> None:
 
-    user = session.get(User, user_id)
-    if not user:
+    db_user = session.get(User, user_id)
+    if not db_user:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuário não encontrado.",
         )
-    session.delete(user)
+    session.delete(db_user)
     session.commit()
-
+    return {'message': 'User deleted with success'}
 
 # =====================================================
 # WEBSOCKET
@@ -223,17 +250,6 @@ def get_image():
 def get_text():
 
     return "Servidor funcionando"
-
-
-# =====================================================
-# JSON
-# =====================================================
-
-
-@app.get("/json")
-def get_json():
-
-    return {"message": "Olá Mundo"}
 
 
 # =====================================================

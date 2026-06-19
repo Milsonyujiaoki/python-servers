@@ -65,3 +65,18 @@ def _mock_db_time_id(
 @pytest.fixture
 def mock_db_time_id():
     return _mock_db_time_id
+
+@pytest.fixture
+def user(session: Session) -> User:
+    # Cria um utilizador fictício válido para os testes de leitura
+    db_user = User(
+        username="User Teste",
+        cpf_cnpj="12345678901",
+        email="user.teste@example.com",
+        password="SenhaValida123",
+        birth_date=datetime.strptime("01/01/2000", "%d/%m/%Y").date()
+    )
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user

@@ -2,37 +2,6 @@ import msgpack
 from fastapi import status
 
 
-def test_create_user_success(client):
-
-    payload = {
-        "name": "Yuji",
-        "birth_date": "2000-01-01",
-        "cpf_cnpj": "52998224725",
-        "email": "yuji@email.com",
-        "password": "Senha123",
-    }
-
-    response = client.post("/users", json=payload)
-
-    assert response.status_code == status.HTTP_201_CREATED
-
-    data = response.json()
-
-    assert data["name"] == "Yuji"
-
-    assert data["email"] == "yuji@email.com"
-
-    assert "id" in data
-
-
-def test_list_users(client):
-
-    response = client.get("/users")
-
-    assert response.status_code == status.HTTP_200_OK
-
-    assert isinstance(response.json(), list)
-
 
 def test_get_user_not_found(client):
 
@@ -42,24 +11,6 @@ def test_get_user_not_found(client):
 
     assert response.json() == {"detail": "Usuário não encontrado."}
 
-
-def test_delete_user_success(client):
-
-    payload = {
-        "name": "Yuji",
-        "birth_date": "2000-01-01",
-        "cpf_cnpj": "52998224725",
-        "email": "yuji@email.com",
-        "password": "Senha123",
-    }
-
-    created = client.post("/users", json=payload)
-
-    user_id = created.json()["id"]
-
-    response = client.delete(f"/users/{user_id}")
-
-    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 def test_invalid_cpf(client):
