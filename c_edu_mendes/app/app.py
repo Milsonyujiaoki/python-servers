@@ -2,10 +2,11 @@ import asyncio
 import csv
 import io
 import time
-from http import HTTPStatus
+from uuid import UUID
 
 import msgpack
 from fastapi import (
+    Depends,
     FastAPI,
     HTTPException,
     WebSocket,
@@ -15,22 +16,22 @@ from fastapi import (
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
-    ORJSONResponse,
     PlainTextResponse,
     Response,
     StreamingResponse,
 )
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.database import get_session
+from app.models import User
 from app.schemas import (
     ItemCardSchema,
-    UserCreate,
-    UserDB,
     UserPublic,
+    UserSchema,
 )
 
 app = FastAPI(title="curso fastapi - app.py")
-
-users: list[UserDB] = []
 
 
 @app.get("/")
@@ -44,12 +45,59 @@ def root():
 
 
 @app.post(
+    "/users", response_model=UserPublic, status_code=status.HTTP_201_CREATED
+)
+def create_user(user: UserSchema, session: Session = Depends(get_session)):
+    db_user: User | None = session.scalar(
+        select(User).where(
+            (User.email == user.email)
+            | (User.username == user.name)
+            | (User.cpf_cnpj == user.cpf_cnpj)
+        )
+    )
+    if db_user:
+        if db_user.email == user.email:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Usuário com email já existe.",
+            )
+        elif db_user.username == user.name:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Usuário com nome já existe.",
+            )
+        elif db_user.cpf_cnpj == user.cpf_cnpj:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Usuário com CPF/CNPJ já existe.",
+            )
+
+    db_user = User(
+        username=user.name,
+        cpf_cnpj=user.cpf_cnpj,
+        email=user.email,
+        password=user.password,
+        birth_date=user.birth_date,
+    )
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return UserPublic(
+        id=db_user.id,
+        name=db_user.username,
+        email=db_user.email,
+    )
+
+
+""" @app.post(
     "/users",
     response_model=UserPublic,
     status_code=status.HTTP_201_CREATED,
 )
 def create_user(
-    user: UserCreate,
+    user: UserSchema,
 ):
 
     user_db = UserDB(
@@ -67,20 +115,14 @@ def create_user(
         name=user_db.name,
         email=user_db.email,
     )
+ """
 
 
-@app.get(
-    "/users",
-    response_model=list[UserPublic],
-)
-def list_users():
-
+@app.get("/users", response_model=list[UserPublic])
+def list_users(session: Session = Depends(get_session)) -> list[UserPublic]:
+    users = session.scalars(select(User)).all()
     return [
-        UserPublic(
-            id=user.id,
-            name=user.name,
-            email=user.email,
-        )
+        UserPublic(id=user.id, name=user.username, email=user.email)
         for user in users
     ]
 
@@ -89,19 +131,19 @@ def list_users():
     "/users/{user_id}",
     response_model=UserPublic,
 )
-def get_user(user_id):
-
-    for user in users:
-        if str(user.id) == str(user_id):
-            return UserPublic(
-                id=user.id,
-                name=user.name,
-                email=user.email,
-            )
-
-    raise HTTPException(
-        status_code=404,
-        detail="Usuário não encontrado.",
+def get_user(
+    user_id: UUID, session: Session = Depends(get_session)
+) -> UserPublic:
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado.",
+        )
+    return UserPublic(
+        id=user.id,
+        name=user.username,
+        email=user.email,
     )
 
 
@@ -109,18 +151,18 @@ def get_user(user_id):
     "/users/{user_id}",
     status_code=204,
 )
-def delete_user(user_id):
+def delete_user(
+    user_id: UUID, session: Session = Depends(get_session)
+) -> None:
 
-    for index, user in enumerate(users):
-        if str(user.id) == str(user_id):
-            users.pop(index)
-
-            return
-
-    raise HTTPException(
-        status_code=404,
-        detail="Usuário não encontrado.",
-    )
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuário não encontrado.",
+        )
+    session.delete(user)
+    session.commit()
 
 
 # =====================================================
@@ -192,23 +234,6 @@ def get_text():
 def get_json():
 
     return {"message": "Olá Mundo"}
-
-
-# =====================================================
-# ORJSON
-# =====================================================
-
-
-@app.get(
-    "/orjson",
-    response_class=ORJSONResponse,
-)
-def get_orjson():
-
-    return ORJSONResponse(
-        status_code=HTTPStatus.CREATED,
-        content={"message": "Criado"},
-    )
 
 
 # =====================================================

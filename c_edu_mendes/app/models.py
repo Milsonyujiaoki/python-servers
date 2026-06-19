@@ -15,9 +15,9 @@ class User:
         primary_key=True, default_factory=uuid4, init=False
     )
 
-    username: Mapped[str]
-    cpf_cnpj: Mapped[str]
-    email: Mapped[str]
+    username: Mapped[str] = mapped_column(unique=True)
+    cpf_cnpj: Mapped[str] = mapped_column(unique=True)
+    email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
     birth_date: Mapped[date]
     created_at: Mapped[datetime] = mapped_column(

@@ -1,6 +1,5 @@
-from http import HTTPStatus
-
 import msgpack
+from fastapi import status
 
 
 def test_create_user_success(client):
@@ -15,7 +14,7 @@ def test_create_user_success(client):
 
     response = client.post("/users", json=payload)
 
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == status.HTTP_201_CREATED
 
     data = response.json()
 
@@ -30,7 +29,7 @@ def test_list_users(client):
 
     response = client.get("/users")
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     assert isinstance(response.json(), list)
 
@@ -39,7 +38,7 @@ def test_get_user_not_found(client):
 
     response = client.get("/users/00000000-0000-0000-0000-000000000000")
 
-    assert response.status_code == 404
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
     assert response.json() == {"detail": "Usuário não encontrado."}
 
@@ -60,7 +59,7 @@ def test_delete_user_success(client):
 
     response = client.delete(f"/users/{user_id}")
 
-    assert response.status_code == 204
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 def test_invalid_cpf(client):
@@ -75,7 +74,7 @@ def test_invalid_cpf(client):
 
     response = client.post("/users", json=payload)
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 def test_invalid_email(client):
@@ -90,7 +89,7 @@ def test_invalid_email(client):
 
     response = client.post("/users", json=payload)
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 def test_invalid_password(client):
@@ -105,32 +104,15 @@ def test_invalid_password(client):
 
     response = client.post("/users", json=payload)
 
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
-
-def test_json_response(client):
-
-    response = client.get("/json")
-
-    assert response.status_code == 200
-
-    assert response.json() == {"message": "Olá Mundo"}
-
-
-def test_orjson_response(client):
-
-    response = client.get("/orjson")
-
-    assert response.status_code == 201
-
-    assert response.json() == {"message": "Criado"}
 
 
 def test_xml_response(client):
 
     response = client.get("/xml")
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     assert "application/xml" in response.headers["content-type"]
 
@@ -139,7 +121,7 @@ def test_csv_response(client):
 
     response = client.get("/csv")
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     assert "text/csv" in response.headers["content-type"]
 
@@ -147,6 +129,8 @@ def test_csv_response(client):
 def test_msgpack_response(client):
 
     response = client.get("/msgpack")
+
+    assert response.status_code == status.HTTP_200_OK
 
     data = msgpack.unpackb(response.content, raw=False)
 

@@ -1,8 +1,8 @@
 import random
 import re
+import string
 from datetime import date, datetime
 from uuid import UUID, uuid4
-import string
 
 from pydantic import (
     BaseModel,
@@ -47,11 +47,18 @@ class ItemCardSchema(BaseModel):
 # =====================================================
 
 
-class UserCreate(BaseModel):
+def generate_default_password() -> str:
+    return str(
+        random.choice(string.ascii_uppercase)  # noqa: S311
+        + str(random.randint(10000000, 99999999))  # noqa: S311
+    )
+
+
+class UserSchema(BaseModel):
     name: str = Field(
         min_length=3,
         max_length=100,
-        default="Yuji",
+        default="Test-User",
     )
 
     birth_date: date = Field(
@@ -63,7 +70,8 @@ class UserCreate(BaseModel):
     email: EmailStr = Field(default="emailteste@gmail.com")
 
     password: str = Field(
-        min_length=8, default=str( random.choice(string.ascii_uppercase) + str(random.randint(10000000, 99999999)))
+        min_length=8,
+        default_factory=generate_default_password,
     )
 
     @field_validator("name")
