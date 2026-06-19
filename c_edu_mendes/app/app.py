@@ -27,6 +27,7 @@ from app.schemas import (
     UserPublic,
     UserSchema,
     UserList,
+    Message,
 )
 
 app = FastAPI(title="curso fastapi - app.py")
@@ -179,7 +180,9 @@ def update_user(
     status_code=status.HTTP_200_OK,
 )
 def delete_user(
-    user_id: UUID, session: Session = Depends(get_session)
+    user_id: UUID,
+    session: Session = Depends(get_session),
+    response_model=Message
 ) -> None:
 
     db_user = session.get(User, user_id)
@@ -190,7 +193,7 @@ def delete_user(
         )
     session.delete(db_user)
     session.commit()
-    return {'message': 'User deleted with success'}
+    return Message(message="User deleted with success")
 
 # =====================================================
 # WEBSOCKET

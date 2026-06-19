@@ -27,3 +27,5 @@ class User:
     updated_at: Mapped[datetime] = mapped_column(
         default_factory=datetime.utcnow, onupdate=func.now(), init=False
     )
+
+

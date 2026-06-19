@@ -89,7 +89,7 @@ def test_put_user(client: TestClient, user: UserSchema) -> None:
     }
 
 
-def test_delete_user_success(client: TestClient, user: UserSchema) -> None:
+def test_delete_user_success(client: TestClient, user: UserPublic) -> None:
 
     user_id = str(user.id)
 
