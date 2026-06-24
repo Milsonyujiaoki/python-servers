@@ -16,8 +16,8 @@ class User:
     )
 
     username: Mapped[str] = mapped_column(unique=True)
-    cpf_cnpj: Mapped[str] = mapped_column(unique=True)
     email: Mapped[str] = mapped_column(unique=True)
+    cpf_cnpj: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
     birth_date: Mapped[date]
     created_at: Mapped[datetime] = mapped_column(
@@ -27,5 +27,3 @@ class User:
     updated_at: Mapped[datetime] = mapped_column(
         default_factory=datetime.utcnow, onupdate=func.now(), init=False
     )
-
-

@@ -3,7 +3,7 @@ import string
 from dataclasses import asdict
 from datetime import datetime
 
-from fastapi import status
+from fastapi import status, Depends
 from fastapi.testclient import TestClient
 
 from sqlalchemy import select
@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from app.app import app
 from app.models import User
 from app.schemas import UserPublic, UserSchema, UserList
+from app.database import get_session
+
 
 def generate_default_password() -> str:
     return str(
@@ -20,7 +22,7 @@ def generate_default_password() -> str:
     )
 
 
-def test_landing()-> None:
+def test_landing() -> None:
     client = TestClient(app)
 
     response = client.get("/")
@@ -35,8 +37,8 @@ def test_create_user(session: Session, mock_db_time_id) -> None:
     with mock_db_time_id(model=User) as (time, static_uuid):
         new_user = User(
             username="test",
-            cpf_cnpj="test",
             email="teste@test.com",
+            cpf_cnpj="test",
             password=senha_test,
             birth_date=data_esperada,
         )
@@ -50,19 +52,21 @@ def test_create_user(session: Session, mock_db_time_id) -> None:
     assert asdict(user) == {
         "id": static_uuid,
         "username": "test",
-        "cpf_cnpj": "test",
         "email": "teste@test.com",
+        "cpf_cnpj": "test",
         "password": senha_test,
         "birth_date": data_esperada,
         "created_at": time,
         "updated_at": time,
     }
 
+
 def test_read_users(client: TestClient) -> None:
     response = client.get("/users")
     assert response.status_code == status.HTTP_200_OK
     assert isinstance(response.json(), dict)
     assert "users" in response.json()
+
 
 def test_read_users_with_users(client: TestClient, user: UserSchema) -> None:
     user_schema = UserPublic.model_validate(user).model_dump(mode="json")
@@ -72,21 +76,51 @@ def test_read_users_with_users(client: TestClient, user: UserSchema) -> None:
 
     assert response.json() == {"users": [user_schema]}
 
-def test_put_user(client: TestClient, user: UserSchema) -> None:
+
+def test_update_user(
+    client: TestClient,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+) -> None:
+
     payload = {
         "name": "Updated Name",
         "email": "updated@test.com",
-        "cpf_cnpj": "18219822821",
+        "cpf_cnpj": "17261704890",
         "password": "UpdatedPassword123",
-        "birth_date": "2000-08-28"
+        "birth_date": "2000-01-01",
     }
     response = client.put(f"/users/{user.id}", json=payload)
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
         "id": str(user.id),
         "name": "Updated Name",
-        "email": "updated@test.com"
+        "email": "updated@test.com",
     }
+
+
+def test_put_integrity_error(client: TestClient, user: UserSchema) -> None:
+    client.post(
+        "/users",
+        json={
+            "name": "Existing User",
+            "email": "existing_email@test.com",
+            "cpf_cnpj": "44233494859",
+            "password": "SenhaValida123",
+            "birth_date": "2000-01-01",
+        },
+    )
+
+    payload = {
+        "name": "Updated Name",
+        "email": "existing_email@test.com",
+        "cpf_cnpj": "44233494859",
+        "password": "SenhaValida123",
+        "birth_date": "2000-01-01",
+    }
+    response = client.put(f"/users/{user.id}", json=payload)
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json() == {"detail": "name, email or cpf_cnpj already exists"}
 
 
 def test_delete_user_success(client: TestClient, user: UserPublic) -> None:
@@ -97,4 +131,3 @@ def test_delete_user_success(client: TestClient, user: UserPublic) -> None:
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"message": "User deleted with success"}
-

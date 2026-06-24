@@ -59,7 +59,7 @@ class UserSchema(BaseModel):
     name: str = Field(
         min_length=3,
         max_length=100,
-        default="Test-User",
+        default="test_user",
     )
 
     birth_date: date = Field(
@@ -68,7 +68,7 @@ class UserSchema(BaseModel):
 
     cpf_cnpj: str = Field(default="18219822821")
 
-    email: EmailStr = Field(default="emailteste@gmail.com")
+    email: EmailStr = Field(default="emailteste@teste.com")
 
     password: str = Field(
         min_length=12,
@@ -143,11 +143,13 @@ class UserSchema(BaseModel):
 # =====================================================
 
 
+
 class UserPublic(BaseModel):
     id: UUID
     name: str = Field(validation_alias="username")
     email: EmailStr
-    model_config = ConfigDict( from_attributes=True, populate_by_name=True )
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
 
 class UserList(BaseModel):
     users: list[UserPublic]
@@ -156,7 +158,7 @@ class UserList(BaseModel):
 class Message(BaseModel):
     message: str
 
-    
+
 # =====================================================
 # HELPERS
 # =====================================================

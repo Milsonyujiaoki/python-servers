@@ -19,6 +19,7 @@ from fastapi.responses import (
 )
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_session
 from app.models import User
@@ -158,22 +159,24 @@ def update_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuário não encontrado.",
         )
+    try:
+        db_user.username = user_update.name
+        db_user.email = user_update.email
+        db_user.cpf_cnpj = user_update.cpf_cnpj
+        db_user.password = user_update.password
+        db_user.birth_date = user_update.birth_date
 
-    db_user.username = user_update.name
-    db_user.cpf_cnpj = user_update.cpf_cnpj
-    db_user.email = user_update.email
-    db_user.password = user_update.password
-    db_user.birth_date = user_update.birth_date
-
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-
-    return UserPublic(
-        id=db_user.id,
-        name=db_user.username,
-        email=db_user.email,
-    )
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+        return db_user
+    
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="name, email or cpf_cnpj already exists",
+        )
 
 @app.delete(
     "/users/{user_id}",
@@ -214,89 +217,6 @@ async def websocket_endpoint(ws: WebSocket):
     except WebSocketDisconnect:
         pass
 
-
-# =====================================================
-# FILES
-# =====================================================
-
-
-@app.get("/pdf")
-def get_pdf():
-
-    return FileResponse(
-        "relatorio.pdf",
-        media_type="application/pdf",
-    )
-
-
-@app.get("/zip")
-def get_zip():
-
-    return FileResponse("backup.zip")
-
-
-@app.get("/image")
-def get_image():
-
-    return FileResponse("foto.png")
-
-
-# =====================================================
-# TEXT
-# =====================================================
-
-
-@app.get(
-    "/text",
-    response_class=PlainTextResponse,
-)
-def get_text():
-
-    return "Servidor funcionando"
-
-
-# =====================================================
-# XML
-# =====================================================
-
-
-@app.get("/xml")
-def get_xml():
-
-    xml = """
-<user>
-    <id>1</id>
-    <name>Yuji</name>
-</user>
-"""
-
-    return Response(
-        content=xml,
-        media_type="application/xml",
-    )
-
-
-# =====================================================
-# CSV
-# =====================================================
-
-
-@app.get("/csv")
-def get_csv():
-
-    buffer = io.StringIO()
-
-    writer = csv.writer(buffer)
-
-    writer.writerow(["id", "nome"])
-
-    writer.writerow([1, "Yuji"])
-
-    return Response(
-        content=buffer.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=usuarios.csv"},
-    )
 
 
 # =====================================================

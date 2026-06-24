@@ -2,7 +2,6 @@ import msgpack
 from fastapi import status
 
 
-
 def test_get_user_not_found(client):
 
     response = client.get("/users/00000000-0000-0000-0000-000000000000")
@@ -10,7 +9,6 @@ def test_get_user_not_found(client):
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
     assert response.json() == {"detail": "Usuário não encontrado."}
-
 
 
 def test_invalid_cpf(client):
@@ -56,25 +54,6 @@ def test_invalid_password(client):
     response = client.post("/users", json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-
-def test_xml_response(client):
-
-    response = client.get("/xml")
-
-    assert response.status_code == status.HTTP_200_OK
-
-    assert "application/xml" in response.headers["content-type"]
-
-
-def test_csv_response(client):
-
-    response = client.get("/csv")
-
-    assert response.status_code == status.HTTP_200_OK
-
-    assert "text/csv" in response.headers["content-type"]
 
 
 def test_msgpack_response(client):
