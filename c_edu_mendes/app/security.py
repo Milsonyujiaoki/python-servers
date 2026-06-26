@@ -16,10 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_session
 from app.models import User
-
-SECRET_KEY = "mysecretkey"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from app.settings import settings
 
 pwd_context = PasswordHash.recommended()
 
@@ -32,7 +29,7 @@ def get_current_user(
 ):
 
     try:
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(
@@ -70,14 +67,14 @@ def get_current_user(
 
 
 def create_access_token(
-    data: dict, expires_delta: int = ACCESS_TOKEN_EXPIRE_MINUTES
+    data: dict, expires_delta: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 ) -> str:
     to_encode = data.copy()
     expire = datetime.now(tz=ZoneInfo("UTC")) + timedelta(
         minutes=expires_delta
     )
     to_encode.update({"exp": expire})
-    encoded_jwt = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 

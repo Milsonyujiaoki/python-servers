@@ -3,7 +3,8 @@ from fastapi.testclient import TestClient
 from jwt import decode
 
 from app.schemas import UserSchema
-from app.security import ALGORITHM, SECRET_KEY, create_access_token
+from app.security import create_access_token
+from app.settings import ALGORITHM, SECRET_KEY
 
 
 def test_jwt_token_creation() -> None:
@@ -26,7 +27,7 @@ def test_jwt_invalid_token() -> None:
 
 def test_get_access_token(client: TestClient, user: UserSchema) -> None:
     response = client.post(
-        "/token",
+        "/auth/token",
         data={"username": user.email, "password": "SenhaValida123"},
     )
 
@@ -37,7 +38,7 @@ def test_get_access_token(client: TestClient, user: UserSchema) -> None:
 
 def test_get_access_token_invalid_credentials(client: TestClient) -> None:
     response = client.post(
-        "/token",
+        "/auth/token",
         data={"username": "invalid_user", "password": "invalid_password"},
     )
 
