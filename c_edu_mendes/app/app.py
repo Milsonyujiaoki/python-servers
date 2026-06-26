@@ -12,6 +12,7 @@ from fastapi.responses import (
     Response,
     StreamingResponse,
 )
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.schemas import (
     ItemCardSchema,
@@ -23,8 +24,19 @@ from app.routes import (
 )
 
 app = FastAPI(title="curso fastapi - app.py")
-app.include_router(auth.router)
-app.include_router(users.router)
+
+# Security middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = "default-src 'self';"
+    return response
+
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
 
 @app.get("/")
 def root():

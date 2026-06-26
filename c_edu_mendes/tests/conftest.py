@@ -91,7 +91,7 @@ def user(session: Session) -> User:
 @pytest.fixture
 def access_token(client: TestClient, user: User) -> str:
     response = client.post(
-        "/auth/token",
+        "/api/v1/auth/token",
         data={"username": user.email, "password": user.cleaned_password},
     )
     assert response.status_code == 200

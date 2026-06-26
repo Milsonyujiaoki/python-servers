@@ -27,7 +27,7 @@ def test_jwt_invalid_token() -> None:
 
 def test_get_access_token(client: TestClient, user: UserSchema) -> None:
     response = client.post(
-        "/auth/token",
+        "/api/v1/auth/token",
         data={"username": user.email, "password": "SenhaValida123"},
     )
 
@@ -38,7 +38,7 @@ def test_get_access_token(client: TestClient, user: UserSchema) -> None:
 
 def test_get_access_token_invalid_credentials(client: TestClient) -> None:
     response = client.post(
-        "/auth/token",
+        "/api/v1/auth/token",
         data={"username": "invalid_user", "password": "invalid_password"},
     )
 

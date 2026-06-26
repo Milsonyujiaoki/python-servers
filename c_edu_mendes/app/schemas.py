@@ -133,7 +133,7 @@ class UserSchema(BaseModel):
         return value.lower().strip()
 
 
-"""     @field_validator("password")
+    @field_validator("password")
     @classmethod
     def validate_password(
         cls,
@@ -146,7 +146,7 @@ class UserSchema(BaseModel):
         if not any(c.isdigit() for c in value):
             raise ValueError("A senha deve possuir número.")
 
-        return value """
+        return value
 
 
 # =====================================================

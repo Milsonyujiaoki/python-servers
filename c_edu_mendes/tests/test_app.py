@@ -87,7 +87,7 @@ def test_create_user_existing_username(
 
 def test_read_users(client: TestClient, access_token: str) -> None:
     headers = {"Authorization": f"Bearer {access_token}"}
-    response = client.get("/users", headers=headers)
+    response = client.get("/api/v1/users", headers=headers)
     assert response.status_code == status.HTTP_200_OK
     assert isinstance(response.json(), dict)
     assert "users" in response.json()
@@ -98,7 +98,7 @@ def test_read_users_with_users(
 ) -> None:
     headers = {"Authorization": f"Bearer {access_token}"}
     user_schema = UserPublic.model_validate(user).model_dump(mode="json")
-    response = client.get("/users", headers=headers)
+    response = client.get("/api/v1/users", headers=headers)
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -119,7 +119,7 @@ def test_update_user(
         "password": get_hashed_password("UpdatedPassword123"),
         "birth_date": "2000-01-01",
     }
-    response = client.put(f"/users/{user.id}", json=payload, headers=headers)
+    response = client.put(f"/api/v1/users/{user.id}", json=payload, headers=headers)
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
         "id": str(user.id),
@@ -135,7 +135,7 @@ def test_put_integrity_error(
 ) -> None:
     headers = {"Authorization": f"Bearer {access_token}"}
     client.post(
-        "/users",
+        "/api/v1/users",
         json={
             "name": "Existing User",
             "email": "existing_email@test.com",
@@ -152,7 +152,7 @@ def test_put_integrity_error(
         "password": get_hashed_password("SenhaValida123"),
         "birth_date": "2000-01-01",
     }
-    response = client.put(f"/users/{user.id}", json=payload, headers=headers)
+    response = client.put(f"/api/v1/users/{user.id}", json=payload, headers=headers)
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {
         "detail": "name, email or cpf_cnpj already exists"
@@ -165,6 +165,6 @@ def test_delete_user_success(
     access_token: str,
 ) -> None:
     headers = {"Authorization": f"Bearer {access_token}"}
-    response = client.delete(f"/users/{user.id}", headers=headers)
+    response = client.delete(f"/api/v1/users/{user.id}", headers=headers)
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"message": "User deleted with success"}

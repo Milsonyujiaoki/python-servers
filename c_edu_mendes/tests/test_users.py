@@ -4,7 +4,7 @@ from fastapi import status
 
 def test_get_user_not_found(client):
 
-    response = client.get("/users/00000000-0000-0000-0000-000000000000")
+    response = client.get("/api/v1/users/00000000-0000-0000-0000-000000000000")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -21,7 +21,7 @@ def test_invalid_cpf(client):
         "password": "Senha123",
     }
 
-    response = client.post("/users", json=payload)
+    response = client.post("/api/v1/users", json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
@@ -36,7 +36,7 @@ def test_invalid_email(client):
         "password": "Senha123",
     }
 
-    response = client.post("/users", json=payload)
+    response = client.post("/api/v1/users", json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
@@ -51,7 +51,7 @@ def test_invalid_password(client):
         "password": "senha123",
     }
 
-    response = client.post("/users", json=payload)
+    response = client.post("/api/v1/users", json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
