@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.models import User
@@ -21,16 +21,17 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post(
     "/", response_model=UserPublic, status_code=status.HTTP_201_CREATED
 )
-def create_user(
-    user: UserSchema, session: Session = Depends(get_session)
+async def create_user(
+    user: UserSchema, session: AsyncSession = Depends(get_session)
 ) -> UserPublic:
-    db_user: User | None = session.scalar(
+    result = await session.execute(
         select(User).where(
             (User.email == user.email)
             | (User.username == user.name)
             | (User.cpf_cnpj == user.cpf_cnpj)
         )
     )
+    db_user: User | None = result.scalar_one_or_none()
     if db_user:
         if db_user.email == user.email:
             raise HTTPException(
@@ -57,8 +58,8 @@ def create_user(
     )
 
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
 
     return UserPublic(
         id=db_user.id,
@@ -68,13 +69,14 @@ def create_user(
 
 
 @router.get("/", response_model=UserList, status_code=status.HTTP_200_OK)
-def get_all_users(
-    session: Session = Depends(get_session),
+async def get_all_users(
+    session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
     limit: int = 50,
     offset: int = 0,
 ) -> UserList:
-    users_db = session.scalars(select(User).offset(offset).limit(limit)).all()
+    result = await session.execute(select(User).offset(offset).limit(limit))
+    users_db = result.scalars().all()
     return UserList(
         users=[
             UserPublic(id=user.id, name=user.username, email=user.email)
@@ -87,10 +89,10 @@ def get_all_users(
     "/{user_id}",
     response_model=UserPublic,
 )
-def get_user(
-    user_id: UUID, session: Session = Depends(get_session)
+async def get_user(
+    user_id: UUID, session: AsyncSession = Depends(get_session)
 ) -> UserPublic:
-    user = session.get(User, user_id)
+    user = await session.get(User, user_id)
     if not user:
         raise HTTPException(
             status_code=404,
@@ -104,10 +106,10 @@ def get_user(
     status_code=status.HTTP_200_OK,
     response_model=UserPublic,
 )
-def update_user(
+async def update_user(
     user_id: UUID,
     user_update: UserSchema,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> UserPublic:
 
@@ -125,12 +127,12 @@ def update_user(
         current_user.birth_date = user_update.birth_date
 
         session.add(current_user)
-        session.commit()
-        session.refresh(current_user)
+        await session.commit()
+        await session.refresh(current_user)
         return current_user
 
     except IntegrityError:
-        session.rollback()
+        await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="name, email or cpf_cnpj already exists",
@@ -140,18 +142,18 @@ def update_user(
 @router.delete(
     "/{user_id}",
     status_code=status.HTTP_200_OK,
-)
-def delete_user(
-    user_id: UUID,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
     response_model=Message,
-) -> None:
+)
+async def delete_user(
+    user_id: UUID,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+) -> Message:
     if current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você não tem permissão para deletar este usuário.",
         )
-    session.delete(current_user)
-    session.commit()
+    await session.delete(current_user)
+    await session.commit()
     return Message(message="User deleted with success")

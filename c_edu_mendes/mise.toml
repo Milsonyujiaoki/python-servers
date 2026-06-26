@@ -33,11 +33,11 @@ run = "docker compose stop"
 
 [tasks.devfast]
 description = "Inicia o servidor FastAPI em modo de desenvolvimento com hot-reload"
-run = "uv run fastapi dev app/app.py --host 127.0.0.1 --port 8100"
+run = "uv run fastapi dev app/app.py --host 127.0.0.1 --port 7100"
 
 [tasks.demofast]
 description = "Inicia o servidor FastAPI em modo de desenvolvimento com hot-reload"
-run = "uv run fastapi dev app/app.py --host 0.0.0.0 --port 8101"
+run = "uv run fastapi dev app/app.py --host 0.0.0.0 --port 7101"
 
 [tasks.devuv]
 description = "Inicia o servidor uvicorn em modo de desenvolvimento com hot-reload"

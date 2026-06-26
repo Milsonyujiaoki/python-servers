@@ -1,12 +1,15 @@
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Generator, Iterator
+from typing import AsyncGenerator, Generator
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import StaticPool
 
 from app.app import app
@@ -16,29 +19,43 @@ from app.security import get_hashed_password
 
 
 @pytest.fixture
-def client(session) -> Generator[TestClient, None, None]:
-    def get_session_override():
-        return session
-
-    with TestClient(app) as client:
-        app.dependency_overrides[get_session] = get_session_override
-        yield client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-def session() -> Iterator[Session]:
-    engine = create_engine(
-        "sqlite:///:memory:",
+async def session() -> AsyncGenerator[AsyncSession, None]:
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    table_registry.metadata.create_all(engine)
 
-    with Session(engine) as session:
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.create_all)
+
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    async with async_session() as session:
+        yield session
+        await session.close()
+
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
+
+    await engine.dispose()
+
+
+@pytest.fixture
+def client(session: AsyncSession) -> Generator[TestClient, None, None]:
+
+    def get_session_override():
+        return session
+
+    async def get_session_async_override():
         yield session
 
-    table_registry.metadata.drop_all(engine)
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_async_override
+        yield client
+    app.dependency_overrides.clear()
 
 
 @contextmanager
@@ -58,6 +75,8 @@ def _mock_db_time_id(
             target.updated_at = time
             target.id = static_uuid
 
+    from sqlalchemy import event
+
     event.listen(model, "before_insert", fake_time_id_hook)
     yield time, static_uuid
     event.remove(model, "before_insert", fake_time_id_hook)
@@ -69,27 +88,26 @@ def mock_db_time_id():
 
 
 @pytest.fixture
-def user(session: Session) -> User:
+async def user(session: AsyncSession) -> User:
     password = "SenhaValida123"
+    # Username is normalized by schema validator (title case)
     db_user = User(
-        username="test_user",
+        username="Test_User",
         email="user@example.com",
         cpf_cnpj="18219822821",
         password=get_hashed_password(password),
         birth_date=datetime.strptime("01/01/2000", "%d/%m/%Y").date(),
     )
     session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
+    await session.commit()
+    await session.refresh(db_user)
 
-    db_user.cleaned_password = (
-        password  # Adiciona a senha limpa para uso nos testes
-    )
+    db_user.cleaned_password = password
     return db_user
 
 
 @pytest.fixture
-def access_token(client: TestClient, user: User) -> str:
+async def access_token(client: TestClient, user: User) -> str:
     response = client.post(
         "/api/v1/auth/token",
         data={"username": user.email, "password": user.cleaned_password},

@@ -132,7 +132,6 @@ class UserSchema(BaseModel):
 
         return value.lower().strip()
 
-
     @field_validator("password")
     @classmethod
     def validate_password(

@@ -58,7 +58,7 @@ ignore = [
 [tool.ruff.lint]
 # E (Error), F (Pyflakes), I (Isort), W (Warning)
 # B (Bugbear - pega bugs de lógica), S (Security - analisa falhas de segurança)
-select = ["E", "F", "I", "W", "B", "S", "PL", "PT"]
+select = ["E", "F", "I", "W", "B", "S", "PL", "PT", "FAST"]
 
 [tool.ruff.format]
 preview=true

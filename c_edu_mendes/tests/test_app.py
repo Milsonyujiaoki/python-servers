@@ -1,13 +1,11 @@
 import random
 import string
-from dataclasses import asdict
 from datetime import datetime
 
 import pytest
 from fastapi import Depends, status
 from fastapi.testclient import TestClient
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.app import app
@@ -35,7 +33,8 @@ def test_landing() -> None:
     assert response.json() == {"message": "Olá Mundo!"}
 
 
-def test_create_user(session: Session, mock_db_time_id) -> None:
+@pytest.mark.asyncio
+async def test_create_user(session, mock_db_time_id) -> None:
     data_esperada = datetime.strptime("28/08/2000", "%d/%m/%Y").date()
     senha_test = generate_default_password()
     with mock_db_time_id(model=User) as (time, static_uuid):
@@ -46,43 +45,46 @@ def test_create_user(session: Session, mock_db_time_id) -> None:
             password=senha_test,
             birth_date=data_esperada,
         )
-        # breakpoint()
         session.add(new_user)
-        session.commit()
+        await session.commit()
 
-        user = session.scalar(select(User).where(User.username == "test"))
-        session.refresh(user)
+        user_found = await session.scalar(
+            select(User).where(User.username == "test")
+        )
+        await session.refresh(user_found)
 
-    assert asdict(user) == {
-        "id": static_uuid,
-        "username": "test",
-        "email": "teste@test.com",
-        "cpf_cnpj": "test",
-        "password": senha_test,
-        "birth_date": data_esperada,
-        "created_at": time,
-        "updated_at": time,
-    }
+    assert user_found is not None
+    assert user_found.id == static_uuid
+    assert user_found.username == "test"
+    assert user_found.email == "teste@test.com"
+    assert user_found.cpf_cnpj == "test"
+    assert user_found.password == senha_test
+    assert user_found.birth_date == data_esperada
+    assert user_found.created_at == time
+    assert user_found.updated_at == time
 
 
-def test_create_user_existing_username(
-    session: Session, user: UserSchema
+@pytest.mark.asyncio
+async def test_create_user_existing_username(
+    client: TestClient, user: UserSchema, access_token: str
 ) -> None:
-
-    new_user = User(
-        username="test_user",  # Presumindo que este já existe via fixture 'user'
-        email="new_email@test.com",
-        cpf_cnpj="18219822821",
-        password=get_hashed_password("SenhaValida123"),
-        birth_date=datetime.strptime("01/01/2000", "%d/%m/%Y").date(),
+    """Test that API properly validates duplicate usernames."""
+    # Try to create a user with existing username via API
+    response = client.post(
+        "/api/v1/users",
+        json={
+            "name": "test_user",  # Same username as fixture 'user'
+            "email": "new_email@test.com",
+            "cpf_cnpj": "52998224725",  # Valid CPF (different from fixture)
+            "password": "SenhaValida123",
+            "birth_date": "2000-01-01",
+        },
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
-    session.add(new_user)
-
-    with pytest.raises(IntegrityError):
-        session.commit()
-
-    session.rollback()
+    # API should return 409 Conflict, not raise IntegrityError
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert "nome" in response.json()["detail"].lower()
 
 
 def test_read_users(client: TestClient, access_token: str) -> None:
@@ -119,7 +121,9 @@ def test_update_user(
         "password": get_hashed_password("UpdatedPassword123"),
         "birth_date": "2000-01-01",
     }
-    response = client.put(f"/api/v1/users/{user.id}", json=payload, headers=headers)
+    response = client.put(
+        f"/api/v1/users/{user.id}", json=payload, headers=headers
+    )
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
         "id": str(user.id),
@@ -152,7 +156,9 @@ def test_put_integrity_error(
         "password": get_hashed_password("SenhaValida123"),
         "birth_date": "2000-01-01",
     }
-    response = client.put(f"/api/v1/users/{user.id}", json=payload, headers=headers)
+    response = client.put(
+        f"/api/v1/users/{user.id}", json=payload, headers=headers
+    )
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {
         "detail": "name, email or cpf_cnpj already exists"
