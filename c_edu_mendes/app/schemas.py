@@ -2,15 +2,25 @@ import random
 import re
 import string
 from datetime import date, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     EmailStr,
     Field,
     field_validator,
-    ConfigDict,
 )
+
+# =====================================================
+# Tokens
+# =====================================================
+
+
+class JWTSchema(BaseModel):
+    access_token: str
+    token_type: str
+
 
 # =====================================================
 # CARDS
@@ -122,7 +132,8 @@ class UserSchema(BaseModel):
 
         return value.lower().strip()
 
-    @field_validator("password")
+
+"""     @field_validator("password")
     @classmethod
     def validate_password(
         cls,
@@ -135,13 +146,12 @@ class UserSchema(BaseModel):
         if not any(c.isdigit() for c in value):
             raise ValueError("A senha deve possuir número.")
 
-        return value
+        return value """
 
 
 # =====================================================
 # RESPONSE
 # =====================================================
-
 
 
 class UserPublic(BaseModel):

@@ -1,202 +1,35 @@
-import asyncio, csv, io, datetime, time, string
-from uuid import UUID
+import asyncio
+import time
 
 import msgpack
 from fastapi import (
-    Depends,
     FastAPI,
-    HTTPException,
     WebSocket,
     WebSocketDisconnect,
-    status,
 )
 from fastapi.responses import (
-    FileResponse,
     HTMLResponse,
-    PlainTextResponse,
     Response,
     StreamingResponse,
 )
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
-from app.database import get_session
-from app.models import User
 from app.schemas import (
     ItemCardSchema,
-    UserPublic,
-    UserSchema,
-    UserList,
-    Message,
+)
+
+from app.routes import (
+    auth,
+    users,
 )
 
 app = FastAPI(title="curso fastapi - app.py")
-
+app.include_router(auth.router)
+app.include_router(users.router)
 
 @app.get("/")
 def root():
     return {"message": "Olá Mundo!"}
 
-
-# =====================================================
-# CRUD USERS
-# =====================================================
-
-
-@app.post(
-    "/users",
-    response_model=UserPublic,
-    status_code=status.HTTP_201_CREATED
-)
-def create_user(user: UserSchema, session: Session = Depends(get_session)) -> UserPublic:
-    db_user: User | None = session.scalar(
-        select(User).where(
-            (User.email == user.email)
-            | (User.username == user.name)
-            | (User.cpf_cnpj == user.cpf_cnpj)
-        )
-    )
-    if db_user:
-        if db_user.email == user.email:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Usuário com email já existe.",
-            )
-        elif db_user.username == user.name:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Usuário com nome já existe.",
-            )
-        elif db_user.cpf_cnpj == user.cpf_cnpj:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Usuário com CPF/CNPJ já existe.",
-            )
-
-    db_user = User(
-        username=user.name,
-        cpf_cnpj=user.cpf_cnpj,
-        email=user.email,
-        password=user.password,
-        birth_date=user.birth_date,
-    )
-
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-
-    return UserPublic(
-        id=db_user.id,
-        name=db_user.username,
-        email=db_user.email,
-    )
-
-""" @app.post(
-    "/users",
-    response_model=UserPublic,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_user(
-    user: UserSchema,
-):
-
-    user_db = UserDB(
-        name=user.name,
-        birth_date=user.birth_date,
-        cpf_cnpj=user.cpf_cnpj,
-        email=user.email,
-        password_hash=f"HASH:{user.password}",
-    )
-
-    users.append(user_db)
-
-    return UserPublic(
-        id=user_db.id,
-        name=user_db.name,
-        email=user_db.email,
-    )
- """
-
-@app.get("/users", response_model=UserList, status_code=status.HTTP_200_OK)
-def get_all_users(session: Session = Depends(get_session), limit: int = 50, offset: int = 0) -> UserList:
-    users = session.scalars(select(User).offset(offset).limit(limit)).all()
-    return UserList(users=[UserPublic(id=user.id, name=user.username, email=user.email) for user in users])
-
-
-@app.get(
-    "/users/{user_id}",
-    response_model=UserPublic,
-)
-def get_user(
-    user_id: UUID, session: Session = Depends(get_session)
-) -> UserPublic:
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado.",
-        )
-    return UserPublic(
-        id=user.id,
-        name=user.username,
-        email=user.email,
-    )
-
-@app.put(
-    "/users/{user_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=UserPublic,
-)
-def update_user(
-    user_id: UUID,
-    user_update: UserSchema,
-    session: Session = Depends(get_session),
-) -> UserPublic:
-    db_user = session.get(User, user_id)
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        )
-    try:
-        db_user.username = user_update.name
-        db_user.email = user_update.email
-        db_user.cpf_cnpj = user_update.cpf_cnpj
-        db_user.password = user_update.password
-        db_user.birth_date = user_update.birth_date
-
-        session.add(db_user)
-        session.commit()
-        session.refresh(db_user)
-        return db_user
-    
-    except IntegrityError:
-        session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="name, email or cpf_cnpj already exists",
-        )
-
-@app.delete(
-    "/users/{user_id}",
-    status_code=status.HTTP_200_OK,
-)
-def delete_user(
-    user_id: UUID,
-    session: Session = Depends(get_session),
-    response_model=Message
-) -> None:
-
-    db_user = session.get(User, user_id)
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado.",
-        )
-    session.delete(db_user)
-    session.commit()
-    return Message(message="User deleted with success")
 
 # =====================================================
 # WEBSOCKET
@@ -216,7 +49,6 @@ async def websocket_endpoint(ws: WebSocket):
 
     except WebSocketDisconnect:
         pass
-
 
 
 # =====================================================

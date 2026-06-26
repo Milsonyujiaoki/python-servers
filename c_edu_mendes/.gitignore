@@ -4,7 +4,7 @@ database.db
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
-
+.agents/
 
 .venv/
 
@@ -22,3 +22,4 @@ __pycache__/
 *.egg-info
 dist
 build
+/.agents/*
